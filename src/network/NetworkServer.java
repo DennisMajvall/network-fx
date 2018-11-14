@@ -1,7 +1,6 @@
 package network;
 
 import java.net.*;
-import java.util.ArrayList;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class NetworkServer {
@@ -10,8 +9,7 @@ public class NetworkServer {
     private final int MSG_SIZE = 512;
 
     // In the Server we store both "WHO sent the msg and WHAT was the msg"
-    private LinkedBlockingDeque<Tuple<Integer, String>> msgQueue = new LinkedBlockingDeque<>();
-    private ArrayList<SocketAddress> clients = new ArrayList<>();
+    private LinkedBlockingDeque<Tuple<SocketAddress, String>> msgQueue = new LinkedBlockingDeque<>();
 
     private DatagramSocket socket;
     private volatile boolean isRunning;
@@ -19,7 +17,7 @@ public class NetworkServer {
 
     private NetworkServer(){
         try {
-            socket = new DatagramSocket(80);
+            socket = new DatagramSocket(PORT);
             socket.setSoTimeout(SLEEP_MS);
         } catch(SocketException e){ System.out.println(e.getMessage()); }
 
@@ -34,17 +32,15 @@ public class NetworkServer {
         isRunning = false;
     }
 
-    public Tuple<Integer, String> pollMessage(){
+    public Tuple<SocketAddress, String> pollMessage(){
         return msgQueue.pollFirst();
     }
 
-    public void sendMsgToClient(String msg, DatagramPacket clientRequest) {
+    public void sendMsgToClient(String msg, SocketAddress clientSocketAddress) {
         byte[] buffer = msg.getBytes();
 
-        InetAddress clientAddress = clientRequest.getAddress();
-        int clientPort = clientRequest.getPort();
+        DatagramPacket response = new DatagramPacket(buffer, buffer.length, clientSocketAddress);
 
-        DatagramPacket response = new DatagramPacket(buffer, buffer.length, clientAddress, clientPort);
         try { socket.send(response); }
         catch (Exception e) { e.printStackTrace(); }
     }
@@ -55,20 +51,16 @@ public class NetworkServer {
         while (isRunning) {
             DatagramPacket clientRequest = new DatagramPacket(new byte[MSG_SIZE], MSG_SIZE);
 
-            if (!receiveMessageFromAnyClient(clientRequest)) {
+            if (!receiveMsgFromAnyClient(clientRequest)) {
                 continue;
             }
 
             String clientMsg = new String(clientRequest.getData(), 0, clientRequest.getLength());
-
-            addNewClientIfNeeded(clientRequest);
-            msgQueue.addLast(new Tuple(getClientIndex(clientRequest), clientMsg));
-
-            sendMsgToClient("Hejsan", clientRequest);
+            msgQueue.addLast(new Tuple(clientRequest.getSocketAddress(), clientMsg));
         }
     }
 
-    private boolean receiveMessageFromAnyClient(DatagramPacket clientRequest){
+    private boolean receiveMsgFromAnyClient(DatagramPacket clientRequest){
         try { socket.receive(clientRequest); }
         catch (Exception ex) {
             try { Thread.sleep(SLEEP_MS); }
@@ -76,16 +68,6 @@ public class NetworkServer {
             return false;
         }
         return true;
-    }
-
-    private int getClientIndex(DatagramPacket client){
-        return clients.indexOf((client.getSocketAddress()));
-    }
-
-    private void addNewClientIfNeeded(DatagramPacket client){
-        if (!clients.contains(client.getSocketAddress())) {
-            clients.add(client.getSocketAddress());
-        }
     }
 }
 

@@ -13,7 +13,6 @@ public class NetworkClient {
 
     private InetAddress serverAddress;
     private LinkedBlockingDeque<String> msgQueue = new LinkedBlockingDeque<>();
-
     private static NetworkClient _singleton = new NetworkClient();
 
     private NetworkClient(){
@@ -39,7 +38,7 @@ public class NetworkClient {
         return msgQueue.pollFirst();
     }
 
-    public void sendMessageToServer(String msg) {
+    public void sendMsgToServer(String msg) {
         byte[] buffer = msg.getBytes();
         DatagramPacket request = new DatagramPacket(buffer, buffer.length, this.serverAddress, NetworkServer.get().PORT);
         try { socket.send(request); } catch (Exception e) {}
