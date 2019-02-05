@@ -1,6 +1,8 @@
 package network;
 
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class NetworkClient {
