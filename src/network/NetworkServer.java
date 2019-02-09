@@ -1,10 +1,13 @@
 package network;
 
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.SocketAddress;
+import java.net.SocketException;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class NetworkServer {
-    public final int PORT = 80;
+    public final int PORT = 9001;
     private final int SLEEP_MS = 100;
     private final int MSG_SIZE = 512;
 
@@ -14,6 +17,7 @@ public class NetworkServer {
     private DatagramSocket socket;
     private volatile boolean isRunning;
     private static NetworkServer _singleton = new NetworkServer();
+
 
     private NetworkServer(){
         try {

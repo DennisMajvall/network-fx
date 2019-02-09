@@ -7,21 +7,20 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 public class NetworkClient {
     private final String SERVER_IP = "localhost";
+    private final int SERVER_PORT = 9001;
     private final int MSG_SIZE = 512;
     private final int SLEEP_MS = 100;
 
     private DatagramSocket socket;
     private volatile boolean isRunning;
 
-    private InetAddress serverAddress;
     private LinkedBlockingDeque<String> msgQueue = new LinkedBlockingDeque<>();
     private static NetworkClient _singleton = new NetworkClient();
 
     private NetworkClient(){
         try {
-            serverAddress = InetAddress.getByName(SERVER_IP);
-
-            socket = new DatagramSocket(0, serverAddress);
+            socket = new DatagramSocket(0);
+            socket.connect(InetAddress.getByName(SERVER_IP), SERVER_PORT);
             socket.setSoTimeout(SLEEP_MS);
         } catch(Exception e){ System.out.println(e.getMessage()); }
 
@@ -42,7 +41,7 @@ public class NetworkClient {
 
     public void sendMsgToServer(String msg) {
         byte[] buffer = msg.getBytes();
-        DatagramPacket request = new DatagramPacket(buffer, buffer.length, this.serverAddress, NetworkServer.get().PORT);
+        DatagramPacket request = new DatagramPacket(buffer, buffer.length);
         try { socket.send(request); } catch (Exception e) {}
     }
 
