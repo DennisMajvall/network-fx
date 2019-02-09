@@ -3,12 +3,10 @@ package network;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketAddress;
-import java.net.SocketException;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class NetworkServer {
     public final int PORT = 9001;
-    private final int SLEEP_MS = 100;
     private final int MSG_SIZE = 512;
 
     // In the Server we store both "WHO sent the msg and WHAT was the msg"
@@ -18,12 +16,11 @@ public class NetworkServer {
     private volatile boolean isRunning;
     private static NetworkServer _singleton = new NetworkServer();
 
-
-    private NetworkServer(){
+    private NetworkServer() {
         try {
             socket = new DatagramSocket(PORT);
-            socket.setSoTimeout(SLEEP_MS);
-        } catch(SocketException e){ System.out.println(e.getMessage()); }
+            socket.setSoTimeout(100);
+        } catch(Exception e){ e.printStackTrace(); }
 
         new Thread(this::loop).start();
     }
@@ -67,8 +64,6 @@ public class NetworkServer {
     private boolean receiveMsgFromAnyClient(DatagramPacket clientRequest){
         try { socket.receive(clientRequest); }
         catch (Exception ex) {
-            try { Thread.sleep(SLEEP_MS); }
-            catch (InterruptedException e) { e.printStackTrace(); }
             return false;
         }
         return true;

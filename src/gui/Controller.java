@@ -44,6 +44,10 @@ public class Controller {
     }
 
     public void sendMsgToClient(){
-        NetworkServer.get().sendMsgToClient("Hello there Mr.Client", lastIncomingPlayer);
+        if (lastIncomingPlayer != null) {
+            NetworkServer.get().sendMsgToClient("Hello there Mr.Client", lastIncomingPlayer);
+        } else {
+            System.out.println("No client connected yet");
+        }
     }
 }

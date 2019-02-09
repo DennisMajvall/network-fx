@@ -3,13 +3,13 @@ package network;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketTimeoutException;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class NetworkClient {
-    private final String SERVER_IP = "localhost";
+    private final String SERVER_IP = "127.0.0.1";
     private final int SERVER_PORT = 9001;
     private final int MSG_SIZE = 512;
-    private final int SLEEP_MS = 100;
 
     private DatagramSocket socket;
     private volatile boolean isRunning;
@@ -17,11 +17,11 @@ public class NetworkClient {
     private LinkedBlockingDeque<String> msgQueue = new LinkedBlockingDeque<>();
     private static NetworkClient _singleton = new NetworkClient();
 
-    private NetworkClient(){
+    private NetworkClient() {
         try {
             socket = new DatagramSocket(0);
             socket.connect(InetAddress.getByName(SERVER_IP), SERVER_PORT);
-            socket.setSoTimeout(SLEEP_MS);
+            socket.setSoTimeout(100);
         } catch(Exception e){ System.out.println(e.getMessage()); }
 
         new Thread(this::loop).start();
@@ -52,9 +52,9 @@ public class NetworkClient {
         try {
             socket.receive(response);
             msgQueue.addLast(new String(buffer, 0, response.getLength()));
+        } catch (SocketTimeoutException ex) { // Do nothing
         } catch (Exception ex) {
-            try { Thread.sleep(SLEEP_MS); }
-            catch (Exception e) {}
+            ex.printStackTrace();
         }
     }
 
