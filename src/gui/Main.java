@@ -1,6 +1,7 @@
 package gui;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -9,22 +10,36 @@ import network.NetworkClient;
 import network.NetworkServer;
 
 public class Main extends Application {
+    public static Stage primaryStage;
 
     @Override
     public void start(Stage primaryStage) throws Exception{
+        Main.primaryStage = primaryStage;
         initiateNetwork();
 
-        Parent root = FXMLLoader.load(getClass().getResource("sample.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("sample.fxml"));
+        Parent root = loader.load();
+        Controller controller = loader.getController();
+
+        // Store access to the controller for later user
+        primaryStage.setUserData(controller);
+
+        // Alternative to setUserData
+        // primaryStage.getProperties().put("controller", controller);
+
+        // Alternative to the code in Main::stop();
+//        primaryStage.setOnHidden( windowEvent -> controller.onShutdown() );
+
         primaryStage.setTitle("Hello World");
         primaryStage.setScene(new Scene(root, 300, 275));
         primaryStage.show();
+
     }
 
     @Override
     public void stop(){
-        System.out.println("stopping threads");
-        NetworkServer.get().stop();
-        NetworkClient.get().stop();
+        Controller controller = (gui.Controller)primaryStage.getUserData();
+        controller.onShutdown();
     }
 
     private void initiateNetwork() {
