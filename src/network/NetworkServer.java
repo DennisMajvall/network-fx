@@ -1,11 +1,7 @@
 package network;
 
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.SocketAddress;
-import java.net.SocketTimeoutException;
+import java.io.*;
+import java.net.*;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class NetworkServer {
@@ -39,13 +35,27 @@ public class NetworkServer {
         return msgQueue.pollFirst();
     }
 
-    public void sendMsgToClient(String msg, SocketAddress clientSocketAddress) {
-        byte[] buffer = msg.getBytes();
+    // Delete this old method after presentation.
+//    public void sendMsgToClient(String msg, SocketAddress clientSocketAddress) {
+//        byte[] buffer = msg.getBytes();
+//
+//        DatagramPacket response = new DatagramPacket(buffer, buffer.length, clientSocketAddress);
+//
+//        try { socket.send(response); }
+//        catch (Exception e) { e.printStackTrace(); }
+//    }
 
-        DatagramPacket response = new DatagramPacket(buffer, buffer.length, clientSocketAddress);
+    public void sendObjectToClient(Serializable object, SocketAddress clientSocketAddress) {
+        ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
+        try (ObjectOutputStream out = new ObjectOutputStream(byteArrayStream)) {
+            out.writeObject(object);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-        try { socket.send(response); }
-        catch (Exception e) { e.printStackTrace(); }
+        DatagramPacket request = new DatagramPacket(byteArrayStream.toByteArray(), byteArrayStream.size(), clientSocketAddress);
+        try { socket.send(request); }
+        catch (Exception e) { e.printStackTrace();}
     }
 
     private void loop() {
@@ -61,6 +71,16 @@ public class NetworkServer {
         }
     }
 
+    private boolean receiveMsgFromAnyClient(DatagramPacket clientRequest){
+        try {
+            socket.receive(clientRequest);
+            return true;
+        } catch (SocketTimeoutException e) { // Ignore timeout
+        } catch (Exception e) { e.printStackTrace(); }
+
+        return false;
+    }
+
     private Object deserializeRequest(DatagramPacket clientRequest){
         try {
             try (ByteArrayInputStream bin = new ByteArrayInputStream(clientRequest.getData())) {
@@ -72,16 +92,6 @@ public class NetworkServer {
             e.printStackTrace();
         }
         return null;
-    }
-
-    private boolean receiveMsgFromAnyClient(DatagramPacket clientRequest){
-        try {
-            socket.receive(clientRequest);
-            return true;
-        } catch (SocketTimeoutException e) { // Ignore timeout
-        } catch (Exception e) { e.printStackTrace(); }
-
-        return false;
     }
 }
 

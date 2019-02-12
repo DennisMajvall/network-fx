@@ -56,15 +56,19 @@ public class Controller {
     }
 
     private void checkClientIncomingMessages(){
-        var srvMsg = NetworkClient.get().pollMessage();
-        if (srvMsg != null) {
-            System.out.println("Client got: " + srvMsg);
+        var clientMsg = NetworkClient.get().pollMessage();
+        if (clientMsg  != null) {
+            if (clientMsg instanceof String) {
+                System.out.println("Client recieved the String: " + (String) clientMsg);
+            } else {
+                System.out.println("Client recieved something: " + clientMsg.toString());
+            }
         }
     }
 
     public void sendMsgToClient(){
         if (lastIncomingPlayer != null) {
-            NetworkServer.get().sendMsgToClient("Hello there Mr.Client", lastIncomingPlayer);
+            NetworkServer.get().sendObjectToClient("Hello there Mr.Client", lastIncomingPlayer);
         } else {
             System.out.println("No client connected yet");
         }
